@@ -1,6 +1,7 @@
 from pwn import *
 import traceback, unittest, time
 
+
 class demo:
     def ptrsize(self):
         log.info('ptrsize()')
@@ -102,75 +103,92 @@ class Harness(object):
     def setUp(self):
         context.clear()
         context.arch = self.arch
+        self.d = demo_process(self.binary)
+
+    def tearDown(self):
+        self.d.close()
 
     def test_basic_io(self):
-        with demo_process(self.binary) as d:
-            d.onebyte()
+        self.d.onebyte()
 
-            assert d.ptrsize() == context.bytes
+    def test_ptrsize(self):
+        self.assertEqual(d.ptrsize(), context.bytes)
 
-            data = 'A' * 0x10
-            mem  = d.allocate(len(data))
-            d.write(mem, data)
-            assert data == d.read(mem, len(data))
-            d.free(mem)
+    def test_alloc_write_read_free(self):
+        data = 'A' * 0x10
+        mem  = self.d.allocate(len(data))
+        self.d.write(mem, data)
+        self.assertEqual(data, self.d.read(mem, len(data)))
+        self.d.free(mem)
 
-            assert 'hi'   == d.format('hi')
+    def test_dprintf(self):
+        self.assertEqual('hi', self.d.format('hi'))
 
-            d.shell('echo hi')
-            assert 'hi\n' == d.recvrepeat()
+    def test_shellecho(self):
+        self.d.shell('echo hi')
+        self.assertEqual('hi\n', self.d.recvrepeat())
+
 
     def test_exit_eof(self):
         # Ensure we get EOFError when read()ing
-        with demo_process(self.binary) as d:
-            d.exit()
-            try:             d.recvn(1)
-            except EOFError: pass
-            else:            assert False, "Expected EOFError"
+        self.d.exit()
+        with self.assertRaises(EOFError):
+            self.d.recvn(1)
 
         # Ensure we get EOFError when write()ing
-        with demo_process(self.binary) as d:
-            d.exit()
-            time.sleep(0.01)
-            try:             d.send('ooga booga')
-            except EOFError: pass
-            else:            assert False, "Expected EOFError"
+        self.d.exit()
+        time.sleep(0.01)
+        with self.assertRaises(EOFError):
+            self.d.send('ooga booga')
 
     def test_segfault_eof(self):
         # Ensure we get EOFError after segfault => write
-        with demo_process(self.binary) as d:
-            d.segfault()
-            time.sleep(0.01)
-            assert 'Got SIGSEGV' in d.recvall()
-            try:             d.send('ooga booga')
-            except EOFError: pass
-            else:            assert False, "Expected EOFError"
+        self.d.segfault()
+        time.sleep(0.01)
+        self.assertIn('Got SIGSEGV' in self.d.recvall())
+        with self.assertRaises(EOFError):
+            self.d.send('ooga booga')
 
     def test_libc(self):
-        with demo_process(self.binary) as d:
-            # Read the ELF header of LIBC to ensure bi-directional comms
-            libc = d.leak_libc()
-            assert '\x7FELF' == d.read(libc, 4)
+        # Read the ELF header of LIBC to ensure bi-directional comms
+        libc = self.d.leak_libc()
+        self.assertEqual('\x7FELF', self.d.read(libc, 4))
 
     def test_dynelf(self):
-        with demo_process(self.binary) as d:
-            # Test ELF functionality
-            elf    = ELF(self.binary)
+        # Test ELF functionality
+        elf    = ELF(self.binary)
 
-            # Resolve 'system' manually and compare with DynELF
-            d.shell('') # Cause got.system to be filled
+        # Resolve 'system' manually and compare with DynELF
+        self.test_shellecho()
 
-            main        = d.leak_main()
-            elf.address = main - (elf.symbols['main'] - elf.address)
-            want        = unpack(d.read(elf.got['system'], context.bytes))
+        main        = self.d.leak_main()
+        elf.address = main - (elf.symbols['main'] - elf.address)
+        got_system  = elf.got['system']
+        plt_system  = elf.plt['system']
+        want        = unpack(self.d.read(got_system, context.bytes))
 
-            @MemLeak
-            def leak(addr, n=256):
-                return d.read(addr, n)
 
-            resolver = DynELF.from_elf(leak, elf)
-            got      = resolver.lookup('system')
-            assert got==want, "%#x == %#x" % (got, want)
+
+        log.info("plt.system %#x" % plt_system)
+
+        self.assertNotEqual(want, plt_system)
+
+        @MemLeak
+        def leak(addr, n=256):
+            return self.d.read(addr, n)
+
+        resolver = DynELF.from_elf(leak, elf)
+        got      = resolver.lookup('system')
+
+        log.info("plt    system at %#x" % plt_system)
+        log.info("got    system at %#x" % got_system)
+        log.info("libc   system at %#x" % want)
+        log.info('dynelf system at %#x' % got)
+
+        gdb.attach(self.d)
+        raw_input('waiting')
+
+        self.assertEqual(got, want)
 
     # def test_listen_spawn(self):
     #     l = listen()
@@ -179,21 +197,19 @@ class Harness(object):
     #     r.exit()
 
     def test_connect(self):
-        with demo_process(self.binary) as d:
-            d.connect()
-            d.exit()
+        self.d.connect()
+        self.d.exit()
 
-    def shellcode_tester(self, sc, d=None):
-        d   = d or demo_process(self.binary)
-        mem = d.allocate(len(sc))
-        d.write(mem, sc)
-        d.call(mem)
+    def shellcode_tester(self, sc):
+        mem = self.d.allocate(len(sc))
+        self.d.write(mem, sc)
+        self.d.call(mem)
         return d
 
     def test_shellcode_ret(self):
         sc = asm(shellcraft.ret())
         d  = self.shellcode_tester(sc)
-        d.exit()
+        self.d.exit()
 
     # def test_shellcode_findpeersh(self):
     #     with context.local(log_level= 'debug'):
@@ -209,11 +225,12 @@ class Harness(object):
     #         # d.interactive()
     #     pass
 
-class Testi386(unittest.TestCase, Harness):
+class Testi386(Harness,unittest.TestCase):
     def __init__(self, *a, **kw):
         self.arch   = 'i386'
-        self.binary = './shellcode-i386'
+        self.binary = './i386-pwntest'
         super(Testi386, self).__init__(*a,**kw)
+
 
 
 # if __name__ == '__main__':
@@ -238,16 +255,18 @@ class Testi386(unittest.TestCase, Harness):
 #         sc = asm(shellcraft.sh())
 #         d  = demo(binary)
 #         mem = d.allocate(len(sc))
-#         d.write(mem, sc)
+#         self.d.write(mem, sc)
 
 #         gdb.attach(d, '''c''')
 #         pause()
 
-#         d.call(mem)
-#         d.sendline('id')
-#         d.interactive()
+#         self.d.call(mem)
+#         self.d.sendline('id')
+#         self.d.interactive()
 
 
 if __name__ == '__main__':
-    with context.local(log_level = 'ERROR' if not args['DEBUG'] else 'DEBUG'):
+    pwnlib.term.term_mode = False
+    pwnlib.term.text.enabled = False
+    with context.local(log_level = 'ERROR' if '-v' not in sys.argv else 'DEBUG'):
         unittest.main()
