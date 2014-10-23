@@ -295,6 +295,32 @@ void do_getport
     write(STDOUT, &g_port, sizeof(g_port));
 }
 
+void do_leak_baseaddress()
+{
+    uintptr_t start = (uintptr_t) &do_leak_baseaddress;
+    start &= ~(0x1000 - 1);
+
+    while(memcmp((char*)start+1, "ELF", 3))
+        start -= 0x1000;
+
+    write(STDOUT, &start, sizeof(start));
+}
+
+void do_get_linkmap()
+{
+    struct link_map *lm = (struct link_map*) dlopen("libc.so.6", RTLD_LAZY);
+    write(STDOUT, &lm, sizeof(lm));
+}
+
+
+void do_get_libc_system()
+{
+    void *libc   = dlopen("libc.so.6", RTLD_LAZY);
+    void *systm  = dlsym(libc, "__libc_system");
+    write(STDOUT, &systm, sizeof(systm));
+}
+
+
 typedef void (*funcptr)();
 
 funcptr functions[] = {
@@ -314,6 +340,9 @@ funcptr functions[] = {
     do_onebyte,         // 13
     do_call,            // 14
     do_getport,         // 15
+    do_leak_baseaddress,// 16
+    do_get_linkmap,     // 17
+    do_get_libc_system  // 18
 };
 
 //******************************************************************************
