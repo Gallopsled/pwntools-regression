@@ -123,9 +123,10 @@ class demo_remote(demo, remote): pass
 
 # context.log_level = 'debug'
 
-def test_binary(binary, has_linkmap):
+def test_binary(binary):
     print binary
     p = demo_process('./%s' % binary)
+    # g = gdb.attach(p, 'continue\n')
 
     assert p.ptrsize() == context.word_size/8
 
@@ -135,24 +136,23 @@ def test_binary(binary, has_linkmap):
         log.debug("%#x => %s" % (address, (data or '').encode('hex')))
         return data
 
-    d = DynELF.from_elf(leak, binary, p.leak_base())
+    system = p.leak_system()
 
-    if not has_linkmap:
-        d = DynELF.for_one_lib_only(leak, p.leak_libc())
-        assert d.lookup('system') == p.leak_system()
-    else:
-        assert d.lookup(None,     'libc') == p.leak_libc()
-        assert d.lookup('system', 'libc') == p.leak_system()
+    d = DynELF(leak, p.leak_main(), elf=binary)
+    assert d.lookup(None,     'libc') == p.leak_libc()
+    assert d.lookup('system', 'libc') == system
 
+    libc = DynELF(leak, system)
+    assert libc.lookup('system')      == system
 
-def test(arch, mode, has_linkmap):
+def test(arch, mode):
     with context.local(arch=arch):
         binary = "%s%s%s" % (context.arch,'-pwntest',mode)
-        test_binary(binary, has_linkmap)
+        test_binary(binary)
 
-test('i386', '',          True)
-test('i386', '-partial',  False)
-test('i386', '-relro',    False)
-test('amd64', '',         True)
-test('amd64', '-partial', True)
-test('amd64', '-relro',   False)
+test('i386', '')
+test('i386', '-partial')
+test('i386', '-relro')
+test('amd64', '')
+test('amd64', '-partial')
+test('amd64', '-relro')
