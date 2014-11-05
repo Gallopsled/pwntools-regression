@@ -56,5 +56,3 @@ libc6-ppc64-powerpc-cross
 libc6-ppc64el-cross
 libc6-x32
 qemu-user-static
-daemontools
-xinetd

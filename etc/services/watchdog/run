@@ -1,9 +1,0 @@
-#!/bin/sh
-
-TARGET=pwntest
-
-while /bin/true;
-do
-    killall --verbose --older-than 59s --signal KILL --user $TARGET
-    sleep 30
-done
