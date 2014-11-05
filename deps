@@ -1,48 +1,60 @@
-sudo apt-get install binutils-aarch64-linux-gnu
-sudo apt-get install binutils-arm-linux-gnueabi
-sudo apt-get install binutils-arm-linux-gnueabihf
-sudo apt-get install binutils-arm-none-eabi
-sudo apt-get install binutils-m68hc1x
-sudo apt-get install binutils-microblaze
-sudo apt-get install binutils-mips-linux-gnu
-sudo apt-get install binutils-multiarch
-sudo apt-get install binutils-powerpc-linux-gnu
-sudo apt-get install gcc-4.6
-sudo apt-get install gcc-4.6-base:amd64
-sudo apt-get install gcc-4.6-multilib
-sudo apt-get install gcc-4.8
-sudo apt-get install gcc-4.8-aarch64-linux-gnu
-sudo apt-get install gcc-4.8-aarch64-linux-gnu-base
-sudo apt-get install gcc-4.8-arm-linux-gnueabihf
-sudo apt-get install gcc-4.8-arm-linux-gnueabihf-base
-sudo apt-get install gcc-4.8-base:amd64
-sudo apt-get install gcc-4.8-base:i386
-sudo apt-get install gcc-4.8-multilib
-sudo apt-get install gcc-4.8-powerpc-linux-gnu
-sudo apt-get install gcc-4.8-powerpc-linux-gnu-base
-sudo apt-get install gcc-4.9-base:amd64
-sudo apt-get install gcc-4.9-base:i386
-sudo apt-get install libc6-arm64-cross
-sudo apt-get install libc6-armel-armhf-cross
-sudo apt-get install libc6-armel-cross
-sudo apt-get install libc6-armhf-cross
-sudo apt-get install libc6-dbg:amd64
-sudo apt-get install libc6-dbg:i386
-sudo apt-get install libc6-dev:amd64
-sudo apt-get install libc6-dev:i386
-sudo apt-get install libc6-dev-arm64-cross
-sudo apt-get install libc6-dev-armel-armhf-cross
-sudo apt-get install libc6-dev-armel-cross
-sudo apt-get install libc6-dev-armhf-armel-cross
-sudo apt-get install libc6-dev-armhf-cross
-sudo apt-get install libc6-dev-i386
-sudo apt-get install libc6-dev-powerpc-cross
-sudo apt-get install libc6-dev-ppc64-powerpc-cross
-sudo apt-get install libc6-dev-ppc64el-cross
-sudo apt-get install libc6-dev-x32
-sudo apt-get install libc6-i386
-sudo apt-get install libc6-powerpc-cross
-sudo apt-get install libc6-ppc64-powerpc-cross
-sudo apt-get install libc6-ppc64el-cross
-sudo apt-get install libc6-x32
-sudo apt-get install
+binutils-aarch64-linux-gnu
+binutils-alpha-linux-gnu
+binutils-arm-linux-gnu
+binutils-avr-linux-gnu
+binutils-cris-linux-gnu
+binutils-hppa-linux-gnu
+binutils-i386-linux-gnu
+binutils-ia64-linux-gnu
+binutils-m68k-linux-gnu
+binutils-mips-linux-gnu
+binutils-mips64-linux-gnu
+binutils-msp430-linux-gnu
+binutils-powerpc-linux-gnu
+binutils-powerpc64-linux-gnu
+binutils-s390-linux-gnu
+binutils-sparc-linux-gnu
+binutils-sparc64-linux-gnu
+binutils-vax-linux-gnu
+binutils-xscale-linux-gnu
+gcc-4.6
+gcc-4.6-base:amd64
+gcc-4.6-multilib
+gcc-4.8
+gcc-4.8-aarch64-linux-gnu
+gcc-4.8-aarch64-linux-gnu-base
+gcc-4.8-arm-linux-gnueabihf
+gcc-4.8-arm-linux-gnueabihf-base
+gcc-4.8-base:amd64
+gcc-4.8-base:i386
+gcc-4.8-multilib
+gcc-4.8-powerpc-linux-gnu
+gcc-4.8-powerpc-linux-gnu-base
+gcc-4.9-base:amd64
+gcc-4.9-base:i386
+libc6-arm64-cross
+libc6-armel-armhf-cross
+libc6-armel-cross
+libc6-armhf-cross
+libc6-dbg:amd64
+libc6-dbg:i386
+libc6-dev-arm64-cross
+libc6-dev-armel-armhf-cross
+libc6-dev-armel-cross
+libc6-dev-armhf-armel-cross
+libc6-dev-armhf-cross
+libc6-dev-i386
+libc6-dev-powerpc-cross
+libc6-dev-ppc64-powerpc-cross
+libc6-dev-ppc64el-cross
+libc6-dev-x32
+libc6-dev:amd64
+libc6-dev:i386
+libc6-i386
+libc6-powerpc-cross
+libc6-ppc64-powerpc-cross
+libc6-ppc64el-cross
+libc6-x32
+qemu-user-static
+daemontools
+xinetd
