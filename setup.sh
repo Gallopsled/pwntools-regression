@@ -14,10 +14,10 @@ while read line; do
 apt-get install -y $line
 done < deps
 
-# # Install configuration
-# chown root:root  ./etc
-# chmod -R go-rwx  ./etc
-# cp -Rav ./etc/*   /etc/
+# Install configuration
+chown root:root  ./etc
+chmod -R go-rwx  ./etc
+cp -Rav ./etc/*   /etc/
 
 # # Add pwnable user
 # useradd pwntest
