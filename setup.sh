@@ -26,13 +26,17 @@ apt-get install gcc-multilib
 apt-get install gcc-4.8-base:i386 gcc-4.8-base:amd64
 apt-get install gcc-4.8-aarch64-linux-gnu gcc-4.8-arm-linux-gnueabihf gcc-4.8-powerpc-linux-gnu
 
-# Install configuration
-chown root:root  ./etc
-chmod -R go-rwx  ./etc
-cp -Rav ./etc/*   /etc/
+while read line < deps; do
+apt-get install $line
+done
 
-# Add pwnable user
-useradd pwntest
+# # Install configuration
+# chown root:root  ./etc
+# chmod -R go-rwx  ./etc
+# cp -Rav ./etc/*   /etc/
 
-# Kickstart svscan
-initctl start svscanboot
+# # Add pwnable user
+# useradd pwntest
+
+# # Kickstart svscan
+# initctl start svscanboot

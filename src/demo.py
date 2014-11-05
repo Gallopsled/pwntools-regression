@@ -112,7 +112,7 @@ class Harness(object):
         self.d.onebyte()
 
     def test_ptrsize(self):
-        self.assertEqual(d.ptrsize(), context.bytes)
+        self.assertEqual(self.d.ptrsize(), context.bytes)
 
     def test_alloc_write_read_free(self):
         data = 'A' * 0x10
@@ -129,12 +129,13 @@ class Harness(object):
         self.assertEqual('hi\n', self.d.recvrepeat())
 
 
-    def test_exit_eof(self):
+    def test_exit_eof_recv(self):
         # Ensure we get EOFError when read()ing
         self.d.exit()
         with self.assertRaises(EOFError):
             self.d.recvn(1)
 
+    def test_exit_eof_send(self):
         # Ensure we get EOFError when write()ing
         self.d.exit()
         time.sleep(0.01)
@@ -145,7 +146,7 @@ class Harness(object):
         # Ensure we get EOFError after segfault => write
         self.d.segfault()
         time.sleep(0.01)
-        self.assertIn('Got SIGSEGV' in self.d.recvall())
+        self.assertIn('Got SIGSEGV', self.d.recvall())
         with self.assertRaises(EOFError):
             self.d.send('ooga booga')
 
@@ -167,8 +168,6 @@ class Harness(object):
         plt_system  = elf.plt['system']
         want        = unpack(self.d.read(got_system, context.bytes))
 
-
-
         log.info("plt.system %#x" % plt_system)
 
         self.assertNotEqual(want, plt_system)
@@ -177,18 +176,8 @@ class Harness(object):
         def leak(addr, n=256):
             return self.d.read(addr, n)
 
-        resolver = DynELF.from_elf(leak, elf)
-        got      = resolver.lookup('system')
-
-        log.info("plt    system at %#x" % plt_system)
-        log.info("got    system at %#x" % got_system)
-        log.info("libc   system at %#x" % want)
-        log.info('dynelf system at %#x' % got)
-
-        gdb.attach(self.d)
-        raw_input('waiting')
-
-        self.assertEqual(got, want)
+        resolver = DynELF(leak, elf=elf)
+        assert(resolver.lookup('system', 'libc'))
 
     # def test_listen_spawn(self):
     #     l = listen()
@@ -204,7 +193,7 @@ class Harness(object):
         mem = self.d.allocate(len(sc))
         self.d.write(mem, sc)
         self.d.call(mem)
-        return d
+        return self.d
 
     def test_shellcode_ret(self):
         sc = asm(shellcraft.ret())

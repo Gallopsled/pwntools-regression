@@ -426,6 +426,7 @@ main
 
     while (1)
     {
+        // usleep(1000 * 400);
         unsigned char c;
         read(STDIN, &c, 1);
 
