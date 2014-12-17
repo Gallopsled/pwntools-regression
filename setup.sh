@@ -10,9 +10,9 @@ fi
 apt-add-repository ppa:pwntools/binutils
 apt-get update
 
-while read line; do
+for line in $(cat deps); do
 apt-get install -y $line
-done < deps
+done
 
 # Install configuration
 chown root:root  ./etc
