@@ -130,20 +130,36 @@ def test_binary(binary):
 
     assert p.ptrsize() == context.word_size/8
 
-    @MemLeak
     def leak(address):
         data = p.read(address, 4)
         log.debug("%#x => %s" % (address, (data or '').encode('hex')))
         return data
 
+    # Grab real addresses from the binary for testing and validation
+    main   = p.leak_main()
+    libc   = p.leak_libc()
     system = p.leak_system()
 
-    d = DynELF(leak, p.leak_main(), elf=binary)
-    assert d.lookup(None,     'libc') == p.leak_libc()
+    # With our leaker, and a pointer into our target binary,
+    # we can resolve the address of anything.
+    #
+    # We do not actually need to have a copy of the target
+    # binary for this to work.
+    d = DynELF(leak, main)
+    assert d.lookup(None,     'libc') == libc
     assert d.lookup('system', 'libc') == system
 
-    libc = DynELF(leak, system)
-    assert libc.lookup('system')      == system
+    # However, if we *do* have a copy of the target binary,
+    # we can speed up some of the steps.
+    d = DynELF(leak, main, elf=ELF(binary))
+    assert d.lookup(None,     'libc') == libc
+    assert d.lookup('system', 'libc') == system
+
+    # Alternately, we can resolve symbols inside another library,
+    # given a pointer into it.
+    d = DynELF(leak, libc + 0x1234)
+    assert d.libbase               == libc
+    assert d.lookup('system')      == system
 
 def test(arch, mode):
     with context.local(arch=arch):
