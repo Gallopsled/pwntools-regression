@@ -2,6 +2,7 @@ from pwn import *
 import traceback, unittest, time
 
 
+
 class demo:
     def ptrsize(self):
         log.info('ptrsize()')
@@ -50,7 +51,7 @@ class demo:
         self.send(p8(7))
         self.send(p32(len(sz)))
         self.send(sz)
-        return self.recvrepeat().rstrip('\x00')
+        return self.clean().rstrip('\x00')
 
     def leak_main(self):
         log.info('leak_main()')
@@ -96,13 +97,24 @@ class demo:
         assert r.recvn(4) == 'conn'
         return r
 
-class demo_process(demo, process): pass
-class demo_remote(demo, remote): pass
+    def get_system(self):
+        log.info('get_system()')
+        self.send(p8(18))
+        return unpack(self.recvn(context.bytes))
+
+#
+# Note that there's a minor hack here to set the module to
+# 'pwnlib' in order to ensure that we get the expected debugging output.
+#
+class demo_process(demo, process):  pass
+class demo_remote(demo, remote):    pass
 
 class Harness(object):
     def setUp(self):
+        log_level = context.log_level
         context.clear()
         context.arch = self.arch
+        context.log_level = log_level
         self.d = demo_process(self.binary)
 
     def tearDown(self):
@@ -126,7 +138,7 @@ class Harness(object):
 
     def test_shellecho(self):
         self.d.shell('echo hi')
-        self.assertEqual('hi\n', self.d.recvrepeat())
+        self.assertEqual('hi\n', self.d.recvn(3))
 
 
     def test_exit_eof_recv(self):
@@ -173,11 +185,19 @@ class Harness(object):
         self.assertNotEqual(want, plt_system)
 
         @MemLeak
-        def leak(addr, n=256):
+        def leak(addr, n=16):
             return self.d.read(addr, n)
 
+        real_system = self.d.get_system()
+        log.info("real_system %#x" % real_system)
+
+        # First, leak with just a pointer
+        resolver = DynELF(leak, main)
+        assert(real_system == resolver.lookup('system', 'libc'))
+
+        # Second, leak with an elf
         resolver = DynELF(leak, elf=elf)
-        assert(resolver.lookup('system', 'libc'))
+        assert(real_system == resolver.lookup('system', 'libc'))
 
     # def test_listen_spawn(self):
     #     l = listen()
@@ -214,13 +234,31 @@ class Harness(object):
     #         # d.interactive()
     #     pass
 
-class Testi386(Harness,unittest.TestCase):
-    def __init__(self, *a, **kw):
-        self.arch   = 'i386'
-        self.binary = './i386-pwntest'
-        super(Testi386, self).__init__(*a,**kw)
+module = sys.modules[__name__]
 
 
+def make_test(arch):
+    for suffix in ('', 'partial', 'relro'):
+        clazz = make_test2(arch, suffix)
+        name  = arch 
+        if suffix:
+            name += '_'  + suffix
+        clazz.__name__ = name 
+        setattr(module, name, clazz)
+
+def make_test2(arch, suffix):
+    class C(Harness,unittest.TestCase):
+        def __init__(self, *a, **kw):
+            super(C, self).__init__(*a,**kw)
+            self.arch   = arch
+            self.binary = './%s-pwntest' % arch
+            if suffix:
+                self.binary += '-' + suffix
+    return C
+
+# make_test('i386')
+# make_test('amd64')
+make_test('arm')
 
 # if __name__ == '__main__':
 #     contexts = [
@@ -257,5 +295,6 @@ class Testi386(Harness,unittest.TestCase):
 if __name__ == '__main__':
     pwnlib.term.term_mode = False
     pwnlib.term.text.enabled = False
+    #print sys.argv
     with context.local(log_level = 'ERROR' if '-v' not in sys.argv else 'DEBUG'):
         unittest.main()

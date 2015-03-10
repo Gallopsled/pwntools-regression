@@ -11,29 +11,45 @@ ALL = i386-pwntest amd64-pwntest arm-pwntest aarch64-pwntest thumb-pwntest power
 all: $(ALL)
 
 clean: $(ALL)
-	rm -rf $^
+	for file in $^ ; do \
+		rm -rf $$file*; \
+	done
 
 i386-pwntest: $(C_FILES)
-	gcc -m32 $(CFLAGS)       -Wl,-z,norelro      $^ -o $@ $(LDFLAGS)
-	gcc -m32 $(CFLAGS_RELRO) -Wl,-z,relro        $^ -o $@-partial $(LDFLAGS)
-	gcc -m32 $(CFLAGS_RELRO) -Wl,-z,relro,-z,now $^ -o $@-relro $(LDFLAGS)
+	$(eval CC := gcc -m32)
+	$(CC) $(CFLAGS)       -Wl,-z,norelro      $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro        $^ -o $@-partial $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro,-z,now $^ -o $@-relro $(LDFLAGS)
 
 amd64-pwntest: $(C_FILES)
-	gcc -m64 $(CFLAGS) -Wl,-z,norelro      $^ -o $@         $(LDFLAGS)
-	gcc -m64 $(CFLAGS) -Wl,-z,relro        $^ -o $@-partial $(LDFLAGS)
-	gcc -m64 $(CFLAGS) -Wl,-z,relro,-z,now $^ -o $@-relro   $(LDFLAGS)
+	$(eval CC := gcc -m64)
+	$(CC) $(CFLAGS)       -Wl,-z,norelro      $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro        $^ -o $@-partial $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro,-z,now $^ -o $@-relro $(LDFLAGS)
 
 arm-pwntest: $(C_FILES)
-	arm-linux-gnueabihf-gcc-4.8 $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(eval CC := arm-linux-gnueabihf-gcc-4.8)
+	$(CC) $(CFLAGS)       -Wl,-z,norelro      $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro        $^ -o $@-partial $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro,-z,now $^ -o $@-relro $(LDFLAGS)
 
 thumb-pwntest: $(C_FILES)
-	arm-linux-gnueabihf-gcc-4.8 $(CFLAGS) -mthumb $^ -o $@ $(LDFLAGS)
+	$(eval CC := arm-linux-gnueabihf-gcc-4.8 -mthumb)
+	$(CC) $(CFLAGS)       -Wl,-z,norelro      $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro        $^ -o $@-partial $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro,-z,now $^ -o $@-relro $(LDFLAGS)
 
 powerpc-pwntest: $(C_FILES)
-	powerpc-linux-gnu-gcc-4.8 $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(eval CC := powerpc-linux-gnu-gcc-4.8)
+	$(CC) $(CFLAGS)       -Wl,-z,norelro      $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro        $^ -o $@-partial $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro,-z,now $^ -o $@-relro $(LDFLAGS)
 
 aarch64-pwntest: $(C_FILES)
-	aarch64-linux-gnu-gcc-4.8 $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(eval CC := aarch64-linux-gnu-gcc-4.8)
+	$(CC) $(CFLAGS)       -Wl,-z,norelro      $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro        $^ -o $@-partial $(LDFLAGS)
+	$(CC) $(CFLAGS_RELRO) -Wl,-z,relro,-z,now $^ -o $@-relro $(LDFLAGS)
 
 #mips-pwntest: $(C_FILES)qq
 #	gcc-4.3-mips-linux-gnu $(CFLAGS) $^ -o $@
